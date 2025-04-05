@@ -209,12 +209,12 @@ class Coder:
         output = f"{prefix}: {main_model.name} with {self.edit_format} edit format"
 
         # Check for thinking token budget
-        thinking_tokens = main_model.get_thinking_tokens(main_model)
+        thinking_tokens = main_model.get_thinking_tokens()
         if thinking_tokens:
             output += f", {thinking_tokens} think tokens"
 
         # Check for reasoning effort
-        reasoning_effort = main_model.get_reasoning_effort(main_model)
+        reasoning_effort = main_model.get_reasoning_effort()
         if reasoning_effort:
             output += f", reasoning {reasoning_effort}"
 
@@ -922,7 +922,8 @@ class Coder:
         else:
             self.io.tool_error(text)
 
-        url_pattern = re.compile(r"(https?://[^\s/$.?#].[^\s]*)")
+        # Exclude double quotes from the matched URL characters
+        url_pattern = re.compile(r'(https?://[^\s/$.?#].[^\s"]*)')
         urls = list(set(url_pattern.findall(text)))  # Use set to remove duplicates
         for url in urls:
             url = url.rstrip(".',\"")
@@ -934,7 +935,8 @@ class Coder:
         if not self.detect_urls:
             return inp
 
-        url_pattern = re.compile(r"(https?://[^\s/$.?#].[^\s]*[^\s,.])")
+        # Exclude double quotes from the matched URL characters
+        url_pattern = re.compile(r'(https?://[^\s/$.?#].[^\s"]*[^\s,.])')
         urls = list(set(url_pattern.findall(inp)))  # Use set to remove duplicates
         group = ConfirmGroup(urls)
         for url in urls:
@@ -1960,11 +1962,6 @@ class Coder:
             f"Cost: ${format_cost(self.message_cost)} message,"
             f" ${format_cost(self.total_cost)} session."
         )
-
-        if self.add_cache_headers and self.stream:
-            warning = " Use --no-stream for accurate caching costs."
-            self.usage_report = tokens_report + "\n" + cost_report + warning
-            return
 
         if cache_hit_tokens and cache_write_tokens:
             sep = "\n"
